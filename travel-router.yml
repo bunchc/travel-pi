@@ -1,5 +1,9 @@
 ---
 # Provision all the things
+- name: Install galaxy roles
+  hosts: localhost
+  become: false
+  local_action: command ansible-galaxy -r requirements.yaml
 
 - name: Install ansible
   hosts: travelingtech
