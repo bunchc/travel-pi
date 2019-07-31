@@ -1,0 +1,67 @@
+---
+- name: Clone PADD
+  git:
+    repo: "{{ paad_repo }}"
+    version: "{{ paad_version | default('master') }}"
+    dest: "{{ padd_install_dir | default('/opt/padd') }}"
+
+- name: Create PADD user
+  user:
+    name: "{{ padd_user }}"
+    shell: /bin/bash
+    state: present
+    password: "{{ lookup('password', 'credentials/' + paad_user + '/password.txt encrypt=md5_crypt') }}"
+
+- name: Copy padd.sh to /usr/local/bin
+  copy:
+    src: "{{ padd_install_dir }}/padd.sh"
+    dest: /usr/local/bin/padd.sh
+    owner: "{{ padd_user }}"
+    group: "{{ padd_user }}"
+    mode: 0755
+    remote_src: yes
+
+- name: Set PADD to run when padd user logs in
+  become: false
+  blockinfile:
+    dest: "{{ paad_user }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      # Run PADD
+      # If we're on the PiTFT screen (ssh is xterm)
+      if [ "$TERM" == "linux" ] ; then
+        while :
+        do
+          /usr/local/bin/padd.sh
+          sleep 1
+        done
+      fi
+  when: >
+    - padd_autologin is defined
+    - padd_autologin
+  register:  padd_bashrc
+
+- name: "Create autologin service for {{ padd_user }}"
+  template:
+    src: "etc/systemd/system/autologin@.service.j2"
+    dest: "/etc/systemd/system/autologin@.service"
+    state: present
+  when: padd_bashrc is successful
+  register: padd_autologin_svc
+- name: Link autologin service
+  file:
+    src: "/etc/systemd/system/autologin@.service"
+    dest: "/etc/systemd/system/getty.target.wants/getty@tty1.service"
+    state: link
+  when: padd_autologin_svc is successful
+  register: padd_svc_link
+- name: reload daemons
+  systemd:
+    daemon_reload: yes
+  when: padd_svc_link is successful
+  register: padd_svc
+
+- name: Reboot for PADD
+  reboot:
+    reboot_timeout: 300
+  when: padd_svc is successful

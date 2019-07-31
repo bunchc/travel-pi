@@ -1,0 +1,60 @@
+---
+- name: Install packages on Debian
+  apt:
+    name: unzip
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Create pihole directory
+  file:
+    path: /etc/pihole
+    state: directory
+
+- name: Create /etc/pihole/setupVars.conf
+  template:
+    src: etc/pihole/setupVars.conf.j2
+    dest: "/etc/pihole/setupVars.conf"
+  register: pihole_config
+
+- name: Check for pihole binary
+  stat:
+    path: /usr/local/bin/pihole
+  register: pihole_binary
+
+- name: Check for existing pihole
+  set_fact:
+    pihole_installed: "{{ pihole_binary.stat.exists | default(false) }}"
+
+- name: Fix apt if needed
+  command: apt-get install --fix-broken -y
+  ignore_errors: true
+
+- name: download install script
+  become: false
+  get_url:
+    url: "{{ pihole_install_url }}"
+    dest: "~/pihole-install.sh"
+    mode: u+rwx
+  when: not pihole_installed
+
+- name: temp fix dnsmasq so lookups work
+  lineinfile:
+    path: /etc/dnsmasq.conf
+    line: "server=127.0.0.1#{{ cloudflared_port | default('5053') }}"
+    state: present
+  when: install_cloudflared
+  register: cloudflared_fix
+
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+  when: >
+    - cloudflared_fix is defined
+    - cloudflared_fix
+
+- name: run install script
+  command: /home/pi/pihole-install.sh --unattended
+  args:
+    chdir: /home/pi/
+  when: not pihole_installed

@@ -40,19 +40,47 @@ apply_ansible_hardening: True
 install_hostapd: False
 
 # DNS over https
+install_cloudflared: True
 configure_dns_over_https: False
 cloudflared_upstream: "https://9.9.9.9/dns-query"
 cloudflared_port: 5053
 
 # pihole specific
-install_pihole: False
-pihole_install_padd: False
+# Defines if pihole should be installed
+install_pihole: True
 
-# Retropie specific
-install_retropie: False
-retropie_copy_roms: False
-retropie_rom_src: "/home/bunchc/Downloads/Roms"
-retropie_rom_dest: "~/RetroPie/roms"
+# Defines if padd should be installed
+install_padd: True
+
+# Defines if the pi should be configured to autologin and run padd
+padd_autologin: True
+
+# Defines values in /etc/pihole/setupVars.conf if
+# `configure_pihole: True`
+configure_pihole: True
+# Defines if pihole should log queries
+pihole_query_logging: True
+
+# Defines if pihole should install a webserver
+pihole_install_httpd: True
+
+# Defines if the pihole webui should be installed
+pihole_install_webui: True
+
+# Defines if lighttpd should be enabled for pihole
+pihole_enable_lighttpd: True
+
+# Defines if pihole blocking is enabled
+pihole_blocking_enabled: True
+
+# Defines if pihole should require FQDN for lookups
+pihole_requiure_fqdn: True
+
+# Defines if dnssec should be enabled for pihole
+pihole_enable_dnssec: True
+
+# Defines blocklists for pihole
+pihole_block_lists: []
 
 # Defines additional config for ansible-base
 # Tell Debian to upgrade all packages
@@ -93,53 +121,6 @@ bootstrap_debian_set_root_pw: false
 
 pri_domain_name: 'travel-pi.localdomain'
 
-docker_config_users: True
-docker_config_service: True
-docker_users:
-  - 'vagrant'
-  - 'ubuntu'
-  - 'root'
-  - 'pi'
-docker_optsinsecure-registries:
-    - '10.127.16.10:5050'
-
 # Defines additional hardening config
 fail2ban_destemail: 'fmlol@mailinator.com'
-
-
-# vagrant plugins to install
-vagrant_plugins:
-  - 'vagrant-hostmanager'
-  - 'vagrant-cachier'
-  - 'vagrant-triggers'
-  - 'vagrant-pristine'
-  - 'vagrant-libvirt'
-
-vagrant_boxes:
-  - name: 'velocity42/xenial64'
-    url: 'https://app.vagrantup.com/velocity42/boxes/xenial64'
-    provider: 'virtualbox'
-
-# cgminer variables
-cgminer_build_dir: "/home/pi/git/cgminer"
-cgminer_config_dir: "/home/pi"
-cgminer_config_file: "{{ cgminer_config_dir }}/cgminer.conf"
-cgminer_startup_script: "{{ cgminer_config_dir }}/cgminer.sh"
-cgminer_executable: "{{ cgminer_build_dir }}/cgminer"
-cgminer_git_repo: "https://github.com/vthoang/cgminer.git"
-cgminer_packages:
-  - build-essential
-  - git
-  - libusb-1.0-0-dev
-  - libusb-1.0-0
-  - libcurl4-openssl-dev
-  - libncurses5-dev
-  - libudev-dev
-  - screen
-  - libtool
-  - automake
-  - pkg-config
-  - libjansson-dev
-
-sysctl_tuning: True 
 

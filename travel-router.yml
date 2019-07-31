@@ -200,19 +200,22 @@
   vars_files:
     - vars/provision.yaml
   roles:
-    - role: ansible-raspap
-      when: >
-        install_hostapd is defined and
-        install_hostapd
     - role: ansible-cloudflared
-      when: >
-        configure_dns_over_https is defined and
-        configure_dns_over_https
-    - role: ansible-pihole
-      when: >
-        install_pihole is defined and
-        install_pihole
-    - role: ansible-retropie
-      when: >
-        install_retropie is defined and
-        install_retropie
+      when:
+        - provision_host
+        - configure_dns_over_https is defined
+        - configure_dns_over_https
+  tasks:
+    - name: Install pihole
+      import_tasks: tasks/install-pihole.yml
+      when:
+        - provision_host
+        - install_pihole is defined
+        - install_pihole
+      register: pihole_install
+    - name: Install Pi-Hole PADD
+      import_tasks: tasks/install-pihole-padd.yml
+      when:
+        - pihole_install is successful
+        - install_padd is defined
+        - install_padd

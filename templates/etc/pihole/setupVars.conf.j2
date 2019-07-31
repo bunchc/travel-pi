@@ -1,0 +1,20 @@
+WEBPASSWORD=4f6e610cb16588de1e3ef7a399fd1588e9017a175339f1f0f7fc29aa7f308171
+DNSMASQ_LISTENING=single
+DNS_FQDN_REQUIRED={{ pihole_require_fqdn }}
+DNS_BOGUS_PRIV=true
+DNSSEC={{ pihole_enable_dnssec }}
+PIHOLE_INTERFACE={{ pihole_interface | default('wlan0') }}
+{% set ipv4_host = {{ hostvars[inventory_hostname]["ansible_{{ pihole_interface }}"]["ip4"]["address"] }}/{{ hostvars[inventory_hostname]["ansible_{{ pihole_interface }}"]["ipv4"]["netmask"] }} %}
+IPV4_ADDRESS={{ ipv4_host | ipaddr('address/prefix') | default('172.29.248.1/22') }}
+IPV6_ADDRESS=
+{% if install_cloudflared %}
+PIHOLE_DNS_1=127.0.0.1#{{ cloudflared_port | default('5053') }}
+{% else %}
+PIHOLE_DNS_1={{ base_dns_nameservers[0] | default('1.1.1.1') }}
+{% endif %}
+PIHOLE_DNS_2={{ base_dns_nameservers[1] | default('9.9.9.9') }}
+QUERY_LOGGING={{ pihole_query_logging }}
+INSTALL_WEB_SERVER={{ pihole_install_httpd }}
+INSTALL_WEB_INTERFACE={{ pihole_install_webui }}
+LIGHTTPD_ENABLED={{ pihole_enable_lighttpd }}
+BLOCKING_ENABLED={{ pihole_enable_blocking }}

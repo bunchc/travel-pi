@@ -32,3 +32,8 @@
   version: master
   name: ansible-fail2ban
 
+# ansible-cloudflared (https://github.com/bendews/ansible-cloudflared)
+- src: https://github.com/bendews/ansible-cloudflared
+  version: master
+  name: ansible-cloudflared
+
