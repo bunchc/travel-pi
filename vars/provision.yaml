@@ -1,0 +1,145 @@
+---
+# vars file for travel-pi setup
+
+# Defines if the host should be bootstrapped
+bootstrap_host: True
+
+# Defines if provisioning roles should be run
+provision_host: True
+
+# Defines if ramdisks should be used to preserve SD card life
+install_log2ram: True
+
+# Defines if the hostname should be changed to what is specified in inventory
+change_hostname: True
+
+# Defines if base_debian_packages should be installed
+install_packages: True
+
+# Defines if the screen should be installed
+install_screen: True
+
+# Defines if the screen should be rotated
+#
+# 0 = no change
+# 1 = 90 degrees
+# 2 = 180 degrees
+# 3 = 270 degrees
+rotate_screen: 2
+
+# Defines if host hardening should be run
+harden_host: True
+
+# Defines if fail2ban should be installed
+install_fail2ban: True
+
+# Defines if ansible-hardening should be run
+apply_ansible_hardening: True
+
+# setup travel access point
+install_hostapd: False
+
+# DNS over https
+configure_dns_over_https: False
+cloudflared_upstream: "https://9.9.9.9/dns-query"
+cloudflared_port: 5053
+
+# pihole specific
+install_pihole: False
+pihole_install_padd: False
+
+# Retropie specific
+install_retropie: False
+retropie_copy_roms: False
+retropie_rom_src: "/home/bunchc/Downloads/Roms"
+retropie_rom_dest: "~/RetroPie/roms"
+
+# Defines additional config for ansible-base
+# Tell Debian to upgrade all packages
+base_debian_upgrade: false
+base_debian_dist_upgrade: false
+
+# Define DNS servers to update to if update_dns_nameservers = true
+base_dns_nameservers:
+  - '9.9.9.9'
+  - '1.0.0.1'
+
+# Defines if /etc/network/interfaces dns-nameservers is present or not
+# Only used when update_dns_nameservers=true
+base_dns_nameservers_state: 'present'
+
+# Defines additional debian packages
+base_debian_packages:
+  - 'wget'
+  - 'avahi-daemon'
+  - 'avahi-discover'
+  - 'libnss-mdns'
+  - 'htop'
+  - 'ntp'
+  - 'vim'
+  - 'build-essential'
+  - 'software-properties-common'
+  - 'git'
+  - 'git-core'
+  - 'python-pip'
+  - 'lsof'
+  - 'nmap'
+  - 'tree'
+  - 'parallel'
+  - 'sudo'
+
+# Defines additional config for ansible-bootstrap
+bootstrap_debian_set_root_pw: false
+
+pri_domain_name: 'travel-pi.localdomain'
+
+docker_config_users: True
+docker_config_service: True
+docker_users:
+  - 'vagrant'
+  - 'ubuntu'
+  - 'root'
+  - 'pi'
+docker_optsinsecure-registries:
+    - '10.127.16.10:5050'
+
+# Defines additional hardening config
+fail2ban_destemail: 'fmlol@mailinator.com'
+
+
+# vagrant plugins to install
+vagrant_plugins:
+  - 'vagrant-hostmanager'
+  - 'vagrant-cachier'
+  - 'vagrant-triggers'
+  - 'vagrant-pristine'
+  - 'vagrant-libvirt'
+
+vagrant_boxes:
+  - name: 'velocity42/xenial64'
+    url: 'https://app.vagrantup.com/velocity42/boxes/xenial64'
+    provider: 'virtualbox'
+
+# cgminer variables
+cgminer_build_dir: "/home/pi/git/cgminer"
+cgminer_config_dir: "/home/pi"
+cgminer_config_file: "{{ cgminer_config_dir }}/cgminer.conf"
+cgminer_startup_script: "{{ cgminer_config_dir }}/cgminer.sh"
+cgminer_executable: "{{ cgminer_build_dir }}/cgminer"
+cgminer_git_repo: "https://github.com/vthoang/cgminer.git"
+cgminer_packages:
+  - build-essential
+  - git
+  - libusb-1.0-0-dev
+  - libusb-1.0-0
+  - libcurl4-openssl-dev
+  - libncurses5-dev
+  - libudev-dev
+  - screen
+  - libtool
+  - automake
+  - pkg-config
+  - libjansson-dev
+
+sysctl_tuning: True 
+

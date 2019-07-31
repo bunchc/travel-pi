@@ -1,0 +1,34 @@
+---
+# Required roles from ansible galaxy to support 'travel-pi'
+
+# ansible-hardening (https://github.com/openstack/ansible-hardening)
+- src: https://github.com/openstack/ansible-hardening
+  version: stable/stein
+  name: ansible-hardening
+
+# ansible-bootstrap (https://github.com/mrlesmithjr/ansible-bootstrap)
+- src: https://github.com/mrlesmithjr/ansible-bootstrap
+  version: master
+  name: ansible-bootstrap
+
+# ansible-change-hostname
+# (https://github.com/mrlesmithjr/ansible-change-hostname)
+- src: https://github.com/mrlesmithjr/ansible-change-hostname
+  version: master
+  name: ansible-change-hostname
+
+# ansible-base (https://github.com/mrlesmithjr/ansible-base)
+- src: https://github.com/mrlesmithjr/ansible-base
+  version: master
+  name: ansible-base
+
+# ansible-netdata (https://github.com/mrlesmithjr/ansible-netdata)
+- src: https://github.com/mrlesmithjr/ansible-netdata
+  version: master
+  name: ansible-netdata
+
+# ansible-fail2ban (https://github.com/mrlesmithjr/ansible-fail2ban)
+- src: https://github.com/mrlesmithjr/ansible-fail2ban
+  version: master
+  name: ansible-fail2ban
+

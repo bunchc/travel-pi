@@ -1,0 +1,218 @@
+---
+# Provision all the things
+
+- name: Install ansible
+  hosts: travelingtech
+  become: true
+  gather_facts: false
+  vars_files:
+    - vars/provision.yaml
+  tasks:
+    - name: Install Python
+      raw: test -e /usr/bin/python || (apt-get update && apt-get install -y python-minimal)
+      when:
+        - bootstrap_host is defined
+        - bootstrap_host
+
+    - name: Fix apt cache
+      raw: |
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/*
+      when:
+        - bootstrap_host is defined
+        - bootstrap_host
+
+    - name: Install Debian keyring
+      raw: |
+        apt-get update && \
+        apt-get install -y --allow-unauthenticated python-apt debian-keyring && \
+        apt-get install -y --allow-unauthenticated debian-archive-keyring && \
+        apt-get install -y --allow-unauthenticated debian-ports-archive-keyring
+      when:
+        - bootstrap_host is defined
+        - bootstrap_host
+
+# These setup various ramdrives to reduce the wear and tear on the SD card
+- name: Install zram scripts
+  hosts: travelingtech
+  become: true
+  gather_facts: false
+  vars_files:
+    - vars/provision.yaml
+  tasks:
+    - name: "Download and extract"
+      unarchive:
+        src: "{{ item }}/archive/master.tar.gz"
+        dest: "/tmp/"
+        mode: '0755'
+        remote_src: yes
+      with_items:
+        - https://github.com/StuartIanNaylor/zramdrive
+        - https://github.com/StuartIanNaylor/zram-swap-config
+        - https://github.com/StuartIanNaylor/log2zram
+      when:
+        - provision_host
+        - install_log2ram is defined
+        - install_log2ram
+      register: log2ram_download
+    - name: "Install"
+      command: bash ./install.sh
+      args:
+        chdir: "/tmp/{{ item | urlsplit('path') | basename }}-master"
+      with_items:
+        - https://github.com/StuartIanNaylor/zramdrive
+        - https://github.com/StuartIanNaylor/zram-swap-config
+        - https://github.com/StuartIanNaylor/log2zram
+      when:
+        - provision_host
+        - log2ram_download is successful
+      register: log2ram_installed
+    - name: Reboot for zram scripts
+      reboot:
+        reboot_timeout: 300
+      when: log2ram_installed.rc == 0
+
+- name: Host Provisioning
+  hosts: travelingtech
+  become: true
+  gather_facts: true
+  become_method: sudo
+  vars_files:
+    - vars/provision.yaml
+  roles:
+    # Bootstrap ansuble
+    - role: ansible-bootstrap
+      when:
+        - provision_host
+        - bootstrap_host is defined
+        - bootstrap_host
+
+    # Change hostname to match inventory
+    - role: ansible-change-hostname
+      when:
+        - provision_host
+        - change_hostname is defined
+        - change_hostname
+
+    # Install base packages
+    - role: ansible-base
+      when:
+        - provision_host
+        - install_packages is defined
+        - install_packages
+
+- name: Install screen
+  hosts: travelingtech
+  gather_facts: true
+  become: true
+  become_method: sudo
+  ignore_errors: true
+  vars_files:
+    - vars/provision.yaml
+  tasks:
+    - name: Clone screen drivers
+      git:
+        repo: https://github.com/goodtft/LCD-show.git
+        dest: /opt/LCD-show
+        force: yes
+      when:
+        - provision_host
+        - install_screen is defined
+        - install_screen
+      register: screen_install_clone
+    - name: chmod -R 0755 /opt/LCD-show
+      file:
+        path: /opt/LCD-show
+        state: directory
+        recurse: yes
+        mode: '0755'
+      when:
+        - provision_host
+        - screen_install_clone is successful
+      register: screen_install_chmod
+    - name: Install the screen
+      command: bash ./LCD35-show
+      args:
+        chdir: /opt/LCD-show
+      async: 300
+      poll: 5
+      when:
+        - provision_host
+        - screen_install_chmod
+      register: screen_install_rc
+    - name: Wait for host to come back
+      local_action:
+        module: wait_for
+        host: "{{ ansible_ssh_host }}"
+        delay: 30
+        timeout: 300
+      when:
+        - provision_host
+        - screen_install_rc.rc == 0
+    - name: Set screen rotation
+      lineinfile:
+        line: "display_rotate={{ rotate_screen }}"
+        state: present
+        backup: True
+      when:
+        - provision_host
+        - screen_install_rc.rc == 0
+        - rotate_screen is defined
+      register: rotate_config
+    - name: Reboot for screen rotation
+      reboot:
+        reboot_timeout: 300
+
+# Harden the host
+- name: Host hardening
+  hosts: travelingtech
+  gather_facts: true
+  become: true
+  become_method: sudo
+  vars_files:
+    - vars/provision.yaml
+  roles:
+    # Install fail2ban
+    - role: ansible-fail2ban
+      when:
+        - provision_host
+        - harden_host
+        - install_fail2ban is defined
+        - install_fail2ban
+    # Run ansible-hardening, a collection of STIGs
+    - role: ansible-hardening
+      when:
+        - provision_host
+        - harden_host
+        - apply_ansible_hardening is defined
+        - apply_ansible_hardening
+
+######
+# I make no claims that any of this works, but give me a few hours and I'll have
+# it sorted out.
+######
+# Sets up wifi router / AP
+- name: Setup travel router
+  hosts: travelingtech
+  gather_facts: true
+  become: true
+  become_method: sudo
+  vars_files:
+    - vars/provision.yaml
+  roles:
+    - role: ansible-raspap
+      when: >
+        install_hostapd is defined and
+        install_hostapd
+    - role: ansible-cloudflared
+      when: >
+        configure_dns_over_https is defined and
+        configure_dns_over_https
+    - role: ansible-pihole
+      when: >
+        install_pihole is defined and
+        install_pihole
+    - role: ansible-retropie
+      when: >
+        install_retropie is defined and
+        install_retropie
