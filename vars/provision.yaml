@@ -49,11 +49,8 @@ cloudflared_port: 5053
 # Defines if pihole should be installed
 install_pihole: True
 
-# Defines if padd should be installed
-install_padd: True
-
-# Defines if the pi should be configured to autologin and run padd
-padd_autologin: True
+# Defines the location of the pihole install script
+pihole_url: "https://raw.githubusercontent.com/pi-hole/pi-hole/master/automated%20install/basic-install.sh"
 
 # Defines values in /etc/pihole/setupVars.conf if
 # `configure_pihole: True`
@@ -81,6 +78,22 @@ pihole_enable_dnssec: True
 
 # Defines blocklists for pihole
 pihole_block_lists: []
+
+# Defines if padd should be installed
+install_padd: True
+
+# Defines if the pi should be configured to autologin and run padd
+padd_autologin: True
+
+# Defines the padd git repo and version
+padd_repo: "https://github.com/jpmck/PADD"
+padd_versin: "master"
+
+# Defines the padd install location
+padd_install_dir: "/opt/padd"
+
+# Defines user for padd to login as
+padd_user: "padd"
 
 # Defines additional config for ansible-base
 # Tell Debian to upgrade all packages
